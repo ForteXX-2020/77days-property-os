@@ -1,4 +1,4 @@
-import { createSupabaseClient, getMvpUserId } from "@/lib/supabase";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 import type {
   AlertView,
   PortfolioKpiView,
@@ -11,12 +11,10 @@ function toDataError(viewName: string, message: string) {
 
 export async function getPortfolioKpi(): Promise<PortfolioKpiView | null> {
   const supabase = createSupabaseClient();
-  const userId = getMvpUserId();
 
   const { data, error } = await supabase
     .from("portfolio_kpi_view")
     .select("*")
-    .eq("user_id", userId)
     .limit(1)
     .maybeSingle();
 
@@ -29,12 +27,11 @@ export async function getPortfolioKpi(): Promise<PortfolioKpiView | null> {
 
 export async function getAlerts(): Promise<AlertView[]> {
   const supabase = createSupabaseClient();
-  const userId = getMvpUserId();
 
   const { data, error } = await supabase
     .from("alerts_view")
     .select("*")
-    .eq("user_id", userId)
+    .order("due_date", { ascending: true, nullsFirst: false })
     .limit(20);
 
   if (error) {
@@ -46,16 +43,14 @@ export async function getAlerts(): Promise<AlertView[]> {
 
 export async function getPropertySummaries(): Promise<PropertySummaryView[]> {
   const supabase = createSupabaseClient();
-  const userId = getMvpUserId();
 
   const { data, error } = await supabase
-    .from("property_summary_view")
+    .from("property_summary_with_proxies_view")
     .select("*")
-    .eq("user_id", userId)
     .limit(100);
 
   if (error) {
-    throw toDataError("property_summary_view", error.message);
+    throw toDataError("property_summary_with_proxies_view", error.message);
   }
 
   return data ?? [];

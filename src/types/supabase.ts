@@ -1,69 +1,41 @@
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 export type PortfolioKpiView = {
-  user_id: string;
-  property_count?: number | null;
-  unit_count?: number | null;
-  occupied_unit_count?: number | null;
-  vacant_unit_count?: number | null;
-  monthly_scheduled_rent?: number | null;
-  monthly_received_rent?: number | null;
-  monthly_unpaid_rent?: number | null;
-  monthly_scheduled_loan_payment?: number | null;
-  monthly_paid_loan_payment?: number | null;
-  monthly_operating_cost_estimate?: number | null;
-  monthly_projected_cf?: number | null;
-  monthly_actual_cf_to_date?: number | null;
-  rent_collection_rate_pct?: number | null;
-  unit_vacancy_rate_pct?: number | null;
-  rent_weighted_vacancy_rate_pct?: number | null;
-  estimated_noi?: number | null;
-  annual_debt_service?: number | null;
-  portfolio_dscr?: number | null;
-  portfolio_loan_balance?: number | null;
-  portfolio_value?: number | null;
-  portfolio_ltv_pct?: number | null;
+  monthly_rent_current?: number | null;
+  monthly_cf_actual?: number | null;
+  rent_collection_rate?: number | null;
+  dscr_proxy?: number | null;
+  ltv?: number | null;
+  vacancy_rate_unit?: number | null;
+  loan_balance?: number | null;
+  annual_cf_proxy?: number | null;
   [key: string]: Json | undefined;
 };
 
 export type PropertySummaryView = {
-  user_id: string;
+  property_code?: string | null;
   property_name?: string | null;
-  address?: string | null;
   property_type?: string | null;
-  ownership_entity?: string | null;
-  management_company?: string | null;
-  purchase_price?: number | null;
-  current_value?: number | null;
-  monthly_operating_cost_estimate?: number | null;
-  unit_count?: number | null;
-  occupied_unit_count?: number | null;
-  vacant_unit_count?: number | null;
-  full_monthly_rent?: number | null;
-  current_monthly_rent?: number | null;
-  annual_current_rent?: number | null;
-  unit_vacancy_rate_pct?: number | null;
-  rent_weighted_vacancy_rate_pct?: number | null;
+  monthly_rent_current?: number | null;
+  annual_rent_current?: number | null;
   loan_balance?: number | null;
-  monthly_debt_service?: number | null;
-  annual_debt_service?: number | null;
-  estimated_noi?: number | null;
-  dscr?: number | null;
-  ltv_pct?: number | null;
+  annual_payment_master?: number | null;
+  monthly_cf_proxy?: number | null;
+  annual_cf_proxy?: number | null;
+  dscr_proxy?: number | null;
+  vacancy_rate_unit?: number | null;
+  vacancy_rate_rent?: number | null;
+  ltv?: number | null;
   [key: string]: Json | undefined;
 };
 
 export type AlertView = {
-  user_id: string;
-  alert_id?: string | null;
-  property_id?: string | null;
+  priority?: string | number | null;
+  alert_type?: string | null;
   property_name?: string | null;
-  severity?: string | null;
-  title?: string | null;
-  message?: string | null;
-  status?: string | null;
-  created_at?: string | null;
+  unit_name?: string | null;
   due_date?: string | null;
+  alert_message?: string | null;
   [key: string]: Json | undefined;
 };
 
@@ -78,6 +50,12 @@ export type Database = {
         Relationships: [];
       };
       property_summary_view: {
+        Row: PropertySummaryView;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      property_summary_with_proxies_view: {
         Row: PropertySummaryView;
         Insert: never;
         Update: never;

@@ -16,7 +16,3 @@ export function createSupabaseClient() {
     }
   );
 }
-
-export function getMvpUserId() {
-  return getRequiredEnv().NEXT_PUBLIC_MVP_USER_ID;
-}

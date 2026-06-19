@@ -1,81 +1,51 @@
-import {
-  formatJpy,
-  formatNumber,
-  formatOccupancyFromVacancy,
-  formatPercent,
-  formatRatio
-} from "@/lib/format";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { formatJpy, formatPercent, formatRatio } from "@/lib/format";
 import type { PortfolioKpiView } from "@/types/supabase";
 
-type KpiCard = {
-  label: string;
-  value: string;
-  helper: string;
-};
-
 export function KpiCards({
-  kpi,
-  alertsCount
+  kpi
 }: {
   kpi: PortfolioKpiView | null;
-  alertsCount: number;
 }) {
-  const cards: KpiCard[] = [
+  const cards = [
     {
-      label: "Properties",
-      value: formatNumber(kpi?.property_count),
-      helper: "portfolio_kpi_view"
+      label: "Monthly Rent Current",
+      value: formatJpy(kpi?.monthly_rent_current)
     },
     {
-      label: "Units",
-      value: formatNumber(kpi?.unit_count),
-      helper: `${formatNumber(kpi?.occupied_unit_count)} occupied, ${formatNumber(
-        kpi?.vacant_unit_count
-      )} vacant`
+      label: "Monthly CF Actual",
+      value: formatJpy(kpi?.monthly_cf_actual)
     },
     {
-      label: "Occupancy",
-      value: formatOccupancyFromVacancy(kpi?.unit_vacancy_rate_pct),
-      helper: `${formatPercent(kpi?.unit_vacancy_rate_pct)} unit vacancy`
+      label: "Rent Collection Rate",
+      value: formatPercent(kpi?.rent_collection_rate)
     },
     {
-      label: "Monthly rent",
-      value: formatJpy(kpi?.monthly_scheduled_rent),
-      helper: `${formatJpy(kpi?.monthly_received_rent)} received`
-    },
-    {
-      label: "NOI",
-      value: formatJpy(kpi?.estimated_noi),
-      helper: "Estimated annual NOI"
-    },
-    {
-      label: "DSCR",
-      value: formatRatio(kpi?.portfolio_dscr),
-      helper: `${formatJpy(kpi?.annual_debt_service)} annual debt service`
+      label: "DSCR Proxy",
+      value: formatRatio(kpi?.dscr_proxy)
     },
     {
       label: "LTV",
-      value: formatPercent(kpi?.portfolio_ltv_pct),
-      helper: `${formatJpy(kpi?.portfolio_loan_balance)} loan balance`
+      value: formatPercent(kpi?.ltv)
     },
     {
-      label: "Alerts",
-      value: formatNumber(alertsCount),
-      helper: "Open alerts"
+      label: "Vacancy Rate Unit",
+      value: formatPercent(kpi?.vacancy_rate_unit)
+    },
+    {
+      label: "Loan Balance",
+      value: formatJpy(kpi?.loan_balance)
+    },
+    {
+      label: "Annual CF Proxy",
+      value: formatJpy(kpi?.annual_cf_proxy)
     }
   ];
 
   return (
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <article
-          key={card.label}
-          className="rounded border border-ink/10 bg-white p-5 shadow-panel"
-        >
-          <p className="text-sm font-medium text-ink/60">{card.label}</p>
-          <p className="mt-3 text-3xl font-bold text-ink">{card.value}</p>
-          <p className="mt-2 text-xs text-ink/50">{card.helper}</p>
-        </article>
+        <KpiCard key={card.label} label={card.label} value={card.value} />
       ))}
     </section>
   );

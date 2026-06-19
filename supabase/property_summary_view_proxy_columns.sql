@@ -1,0 +1,34 @@
+-- Adds proxy cash-flow columns to public.property_summary_view.
+--
+-- Preferred approach:
+-- 1. Inspect the existing view definition in Supabase:
+--    select pg_get_viewdef('public.property_summary_view'::regclass, true);
+-- 2. Recreate the existing SELECT exactly as-is, preserving all current column
+--    names, order, and types.
+-- 3. Append these three expressions at the end of the SELECT list:
+--
+--    (monthly_rent_current - annual_payment_master / 12.0) as monthly_cf_proxy,
+--    (annual_rent_current - annual_payment_master) as annual_cf_proxy,
+--    case
+--      when annual_payment_master is null or annual_payment_master = 0 then null
+--      else annual_rent_current / annual_payment_master
+--    end as dscr_proxy
+--
+-- Important:
+-- CREATE OR REPLACE VIEW is safe only if all existing columns are preserved with
+-- the same names, order, and compatible types. If Postgres reports a column
+-- mismatch, do not force the replacement. Inspect the current view definition
+-- and produce a full replacement SELECT from that exact definition.
+--
+-- Template:
+--
+-- create or replace view public.property_summary_view as
+-- select
+--   existing_columns_here,
+--   (monthly_rent_current - annual_payment_master / 12.0) as monthly_cf_proxy,
+--   (annual_rent_current - annual_payment_master) as annual_cf_proxy,
+--   case
+--     when annual_payment_master is null or annual_payment_master = 0 then null
+--     else annual_rent_current / annual_payment_master
+--   end as dscr_proxy
+-- from existing_source_here;

@@ -9,7 +9,9 @@ export const metadata: Metadata = {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/property-summary", label: "Property Summary" }
+  { href: "/property-summary", label: "Property Summary" },
+  { href: "/bank-summary", label: "Bank Summary" },
+  { href: "/expenses", label: "Expenses" }
 ];
 
 export default function RootLayout({

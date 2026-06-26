@@ -23,3 +23,153 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/*
+  Bank Summary print styles.
+  Browser print headers and footers are controlled by the print dialog.
+  Disable Chrome's "Headers and footers" option when printing this page.
+*/
+@page {
+  size: A4 portrait;
+  margin: 9mm;
+}
+
+@media print {
+  html,
+  body {
+    background: white !important;
+  }
+
+  body > div > header {
+    display: none !important;
+  }
+
+  body > div {
+    max-width: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  body > div > main {
+    padding: 0 !important;
+  }
+
+  .bank-summary {
+    width: 100%;
+    color: #17201b;
+    font-size: 8.5pt;
+    line-height: 1.25;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .document-header {
+    padding-bottom: 8px !important;
+  }
+
+  .document-title {
+    font-size: 18pt !important;
+    line-height: 1.05 !important;
+  }
+
+  .document-subtitle {
+    margin-top: 3px !important;
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .summary-section {
+    margin-top: 10px !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .section-heading {
+    margin-bottom: 5px !important;
+  }
+
+  .section-heading h2 {
+    font-size: 12pt !important;
+    line-height: 1.1 !important;
+  }
+
+  .snapshot-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .snapshot-card {
+    padding: 6px !important;
+    border-radius: 2px !important;
+  }
+
+  .snapshot-label {
+    font-size: 6.5pt !important;
+    letter-spacing: 0 !important;
+  }
+
+  .snapshot-value {
+    margin-top: 2px !important;
+    font-size: 11pt !important;
+    line-height: 1.1 !important;
+  }
+
+  .table-section {
+    margin-top: 12px !important;
+  }
+
+  .table-wrap {
+    overflow: visible !important;
+  }
+
+  table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    font-size: 6.5pt !important;
+    page-break-inside: auto;
+  }
+
+  th,
+  td {
+    padding: 3px 3px !important;
+    line-height: 1.15 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .property-table .code-column {
+    width: 8%;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .assumptions-section {
+    margin-top: 10px !important;
+    padding: 7px !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .assumptions-list {
+    margin-top: 3px !important;
+    font-size: 7.5pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .document-footer {
+    margin-top: 9px !important;
+    padding-top: 5px !important;
+    font-size: 6.8pt !important;
+    line-height: 1.2 !important;
+  }
+}

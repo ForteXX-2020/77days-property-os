@@ -39,9 +39,82 @@ export type AlertView = {
   [key: string]: Json | undefined;
 };
 
+export type PropertyExpenseRow = {
+  id: string;
+  property_id: string;
+  unit_id?: string | null;
+  lease_id?: string | null;
+  period_month: string;
+  transaction_date?: string | null;
+  amount: number;
+  expense_category: string;
+  accounting_account?: string | null;
+  cashflow_category:
+    | "operating_expense"
+    | "capex"
+    | "loan_interest"
+    | "loan_principal"
+    | "tax"
+    | "insurance"
+    | "owner_adjustment"
+    | "other";
+  is_operating_expense: boolean;
+  is_capex: boolean;
+  is_financing: boolean;
+  is_tax: boolean;
+  source_type?: string | null;
+  source_file_id?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  [key: string]: Json | undefined;
+};
+
+export type PropertyExpenseInsert = Omit<
+  PropertyExpenseRow,
+  "id" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type GenericPropertyRow = {
+  property_id: string;
+  property_code?: string | null;
+  property_name?: string | null;
+  [key: string]: Json | undefined;
+};
+
+export type GenericUnitRow = {
+  unit_id: string;
+  property_id: string;
+  unit_name?: string | null;
+  [key: string]: Json | undefined;
+};
+
 export type Database = {
   public: {
-    Tables: Record<string, never>;
+    Tables: {
+      property_expenses: {
+        Row: PropertyExpenseRow;
+        Insert: PropertyExpenseInsert;
+        Update: Partial<PropertyExpenseInsert>;
+        Relationships: [];
+      };
+      properties: {
+        Row: GenericPropertyRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      units: {
+        Row: GenericUnitRow;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+    };
     Views: {
       portfolio_kpi_view: {
         Row: PortfolioKpiView;

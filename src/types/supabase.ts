@@ -39,6 +39,40 @@ export type AlertView = {
   [key: string]: Json | undefined;
 };
 
+export type MonthlyPlPropertyView = {
+  property_id?: string | null;
+  property_code?: string | null;
+  property_name?: string | null;
+  period_month?: string | null;
+  rent_income?: number | null;
+  operating_expenses?: number | null;
+  noi_draft?: number | null;
+  capex?: number | null;
+  financing?: number | null;
+  tax?: number | null;
+  insurance?: number | null;
+  cf_draft?: number | null;
+  [key: string]: Json | undefined;
+};
+
+export type MonthlyPlUnitView = {
+  property_id?: string | null;
+  property_code?: string | null;
+  property_name?: string | null;
+  unit_id?: string | null;
+  unit_name?: string | null;
+  occupancy_status?: string | null;
+  rent_current?: number | null;
+  period_month?: string | null;
+  rent_received?: number | null;
+  vacancy_start_date?: string | null;
+  vacancy_days?: number | null;
+  move_out_scheduled_date?: string | null;
+  unit_level_expenses?: number | null;
+  unit_level_cf_before_common_allocation?: number | null;
+  [key: string]: Json | undefined;
+};
+
 export type PropertyExpenseRow = {
   id: string;
   property_id: string;
@@ -136,6 +170,18 @@ export type Database = {
       };
       alerts_view: {
         Row: AlertView;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      monthly_pl_property_view: {
+        Row: MonthlyPlPropertyView;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      monthly_pl_unit_view: {
+        Row: MonthlyPlUnitView;
         Insert: never;
         Update: never;
         Relationships: [];

@@ -11,7 +11,8 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/property-summary", label: "Property Summary" },
   { href: "/bank-summary", label: "Bank Summary" },
-  { href: "/expenses", label: "Expenses" }
+  { href: "/expenses", label: "Expenses" },
+  { href: "/monthly-pl", label: "Monthly PL" }
 ];
 
 export default function RootLayout({
@@ -40,7 +41,7 @@ export default function RootLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded border border-ink/10 bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm transition hover:border-moss/40 hover:text-moss"
+                  className="rounded border border-ink/10 bg-white px-3 py-2 text-sm font-medium text-black shadow-sm transition hover:border-moss/40 hover:text-ink"
                 >
                   {item.label}
                 </Link>

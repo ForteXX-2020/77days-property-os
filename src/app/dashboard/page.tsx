@@ -49,7 +49,7 @@ export default async function DashboardPage() {
                   label="Vacancy Rate Unit"
                   value={formatPercent(kpi.vacancy_rate_unit)}
                 />
-                <KpiCard label="Loan Balance" value={formatJpy(kpi.loan_balance)} />
+                <KpiCard label="Current Loan Balance" value={formatJpy(kpi.loan_balance)} />
                 <KpiCard label="Annual CF Proxy" value={formatJpy(kpi.annual_cf_proxy)} />
               </div>
             ) : (

@@ -33,7 +33,7 @@ export function KpiCards({
       value: formatPercent(kpi?.vacancy_rate_unit)
     },
     {
-      label: "Loan Balance",
+      label: "Current Loan Balance",
       value: formatJpy(kpi?.loan_balance)
     },
     {

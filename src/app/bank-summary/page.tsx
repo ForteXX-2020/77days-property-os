@@ -103,7 +103,7 @@ export default async function BankSummaryPage() {
           </div>
           <div className="snapshot-grid grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <SnapshotCard label="Annual Rent" value={formatJpy(snapshot.annualRent)} />
-            <SnapshotCard label="Loan Balance" value={formatJpy(snapshot.loanBalance)} />
+            <SnapshotCard label="Current Loan Balance" value={formatJpy(snapshot.loanBalance)} />
             <SnapshotCard label="Annual Payment" value={formatJpy(snapshot.annualPayment)} />
             <SnapshotCard label="Annual CF Proxy" value={formatJpy(snapshot.annualCfProxy)} />
             <SnapshotCard label="DSCR Proxy" value={formatRatio(snapshot.dscrProxy)} />
@@ -131,7 +131,7 @@ export default async function BankSummaryPage() {
                     <TableHeader>Name</TableHeader>
                     <TableHeader>Type</TableHeader>
                     <TableHeader>Annual Rent</TableHeader>
-                    <TableHeader>Loan Balance</TableHeader>
+                    <TableHeader>Current Loan Balance</TableHeader>
                     <TableHeader>Annual Payment</TableHeader>
                     <TableHeader>Annual CF Proxy</TableHeader>
                     <TableHeader>DSCR Proxy</TableHeader>

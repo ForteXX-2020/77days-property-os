@@ -34,7 +34,7 @@ const columns: ColumnDefinition[] = [
   { key: "property_type", label: "Type", type: "text" },
   { key: "monthly_rent_current", label: "Monthly Rent", type: "number" },
   { key: "annual_rent_current", label: "Annual Rent", type: "number" },
-  { key: "loan_balance", label: "Loan Balance", type: "number" },
+  { key: "loan_balance", label: "Current Loan Balance", type: "number" },
   { key: "annual_payment_master", label: "Annual Payment", type: "number" },
   { key: "monthly_cf_proxy", label: "Monthly CF Proxy", type: "number" },
   { key: "annual_cf_proxy", label: "Annual CF Proxy", type: "number" },

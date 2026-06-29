@@ -49,7 +49,7 @@ export async function getPropertySummaries(): Promise<PropertySummaryView[]> {
   const { data, error } = await supabase
     .from("property_summary_with_proxies_view")
     .select("*")
-    .limit(100);
+    .order("property_code", { ascending: true, nullsFirst: false });
 
   if (error) {
     throw toDataError("property_summary_with_proxies_view", error.message);

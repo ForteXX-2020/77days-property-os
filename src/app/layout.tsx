@@ -12,7 +12,8 @@ const navItems = [
   { href: "/property-summary", label: "Property Summary" },
   { href: "/bank-summary", label: "Bank Summary" },
   { href: "/expenses", label: "Expenses" },
-  { href: "/monthly-pl", label: "Monthly PL" }
+  { href: "/monthly-pl", label: "Monthly PL" },
+  { href: "/deals", label: "Deals" }
 ];
 
 export default function RootLayout({

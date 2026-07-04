@@ -113,6 +113,132 @@ export type PropertyExpenseInsert = Omit<
   updated_at?: string;
 };
 
+export type DealRow = {
+  id: string;
+  deal_name: string;
+  property_name?: string | null;
+  address?: string | null;
+  source_media?: string | null;
+  source_url?: string | null;
+  broker_name?: string | null;
+  property_type?: string | null;
+  asking_price?: number | null;
+  monthly_rent_full?: number | null;
+  annual_rent_full?: number | null;
+  gross_yield?: number | null;
+  gross_yield_full?: number | null;
+  current_yield?: number | null;
+  calculated_gross_yield_full?: number | null;
+  calculated_current_yield?: number | null;
+  monthly_rent_current?: number | null;
+  annual_rent_current?: number | null;
+  structure?: string | null;
+  total_units?: number | null;
+  status: string;
+  final_decision?: string | null;
+  memo?: string | null;
+  next_action?: string | null;
+  deleted_at?: string | null;
+  deleted_reason?: string | null;
+  restored_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  [key: string]: Json | undefined;
+};
+
+export type DealInsert = Omit<DealRow, "id" | "created_at" | "updated_at"> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type DealUnitRow = {
+  id: string;
+  deal_id: string;
+  unit_name: string;
+  floor_area?: number | null;
+  layout?: string | null;
+  rent_amount?: number | null;
+  common_fee?: number | null;
+  occupancy_status?: string | null;
+  lease_status?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  [key: string]: Json | undefined;
+};
+
+export type DealUnitInsert = Omit<
+  DealUnitRow,
+  "id" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type DealSimulationRow = {
+  id: string;
+  deal_id: string;
+  scenario_name: string;
+  purchase_price?: number | null;
+  acquisition_cost_amount?: number | null;
+  equity_amount?: number | null;
+  loan_amount?: number | null;
+  loan_term_years?: number | null;
+  interest_rate?: number | null;
+  monthly_debt_service?: number | null;
+  annual_debt_service?: number | null;
+  noi?: number | null;
+  pre_tax_cash_flow?: number | null;
+  dscr?: number | null;
+  ccr?: number | null;
+  break_even_occupancy?: number | null;
+  assumptions_json: Json;
+  created_at: string;
+  updated_at: string;
+  [key: string]: Json | undefined;
+};
+
+export type DealSimulationInsert = Omit<
+  DealSimulationRow,
+  "id" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type SourceFileRow = {
+  id: string;
+  deal_id?: string | null;
+  property_id?: string | null;
+  file_name: string;
+  file_type?: string | null;
+  document_type?: string | null;
+  storage_path: string;
+  processing_status: string;
+  extracted_text?: string | null;
+  extracted_json?: Json | null;
+  page_count?: number | null;
+  estimated_cost?: number | null;
+  processed_at?: string | null;
+  review_status: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  [key: string]: Json | undefined;
+};
+
+export type SourceFileInsert = Omit<
+  SourceFileRow,
+  "id" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type GenericPropertyRow = {
   property_id: string;
   property_code?: string | null;
@@ -130,6 +256,30 @@ export type GenericUnitRow = {
 export type Database = {
   public: {
     Tables: {
+      deals: {
+        Row: DealRow;
+        Insert: DealInsert;
+        Update: Partial<DealInsert>;
+        Relationships: [];
+      };
+      deal_units: {
+        Row: DealUnitRow;
+        Insert: DealUnitInsert;
+        Update: Partial<DealUnitInsert>;
+        Relationships: [];
+      };
+      deal_simulations: {
+        Row: DealSimulationRow;
+        Insert: DealSimulationInsert;
+        Update: Partial<DealSimulationInsert>;
+        Relationships: [];
+      };
+      source_files: {
+        Row: SourceFileRow;
+        Insert: SourceFileInsert;
+        Update: Partial<SourceFileInsert>;
+        Relationships: [];
+      };
       property_expenses: {
         Row: PropertyExpenseRow;
         Insert: PropertyExpenseInsert;

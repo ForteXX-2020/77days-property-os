@@ -7,7 +7,13 @@ import {
   parseDealNumberInput
 } from "@/lib/dealMetrics";
 import { SOURCE_FILE_DOCUMENT_TYPE_OPTIONS } from "@/lib/dealConstants";
+import {
+  getSourceFileParserKind,
+  getSourceFileUnsupportedReason,
+  parseSourceFileBytes
+} from "@/lib/sourceFileParser";
 import { SOURCE_FILES_BUCKET } from "@/lib/sourceFiles";
+import { normalizeSourceFileStoragePath } from "@/lib/sourceFiles";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 import type { DealInsert, SourceFileInsert } from "@/types/supabase";
 
@@ -323,8 +329,8 @@ export async function uploadDealSourceFile(
     file_type: file.type || null,
     document_type: documentType,
     storage_path: storagePath,
-    processing_status: "pending",
-    review_status: "unreviewed",
+    processing_status: "uploaded",
+    review_status: "unchecked",
     extracted_text: null,
     extracted_json: null,
     page_count: null,
@@ -366,4 +372,96 @@ export async function uploadDealSourceFile(
 
   revalidatePath(`/deals/${dealId}`);
   redirect(`/deals/${dealId}`);
+}
+
+export async function processDealSourceFile(dealId: string, sourceFileId: string) {
+  const supabase = createSupabaseClient();
+  const { data: sourceFile, error: sourceFileError } = await supabase
+    .from("source_files")
+    .select("*")
+    .eq("id", sourceFileId)
+    .eq("deal_id", dealId)
+    .maybeSingle();
+
+  if (sourceFileError) {
+    throw new Error(`Failed to load source file: ${sourceFileError.message}`);
+  }
+
+  if (!sourceFile) {
+    throw new Error("Source file was not found.");
+  }
+
+  const parserKind = getSourceFileParserKind(sourceFile);
+
+  if (!parserKind) {
+    throw new Error(getSourceFileUnsupportedReason(sourceFile));
+  }
+
+  const objectKey = normalizeSourceFileStoragePath(sourceFile.storage_path);
+  const { data: fileBlob, error: downloadError } = await supabase.storage
+    .from(SOURCE_FILES_BUCKET)
+    .download(objectKey);
+
+  if (downloadError || !fileBlob) {
+    await markSourceFileParsingFailed(
+      sourceFile.id,
+      `Storage download failed: ${downloadError?.message ?? "No file returned."}`
+    );
+    throw new Error(
+      `Failed to download source file: ${downloadError?.message ?? "No file returned."}`
+    );
+  }
+
+  try {
+    const bytes = new Uint8Array(await fileBlob.arrayBuffer());
+    const parsed = parseSourceFileBytes(sourceFile, bytes);
+    const { error: updateError } = await supabase
+      .from("source_files")
+      .update({
+        extracted_text: parsed.extractedText,
+        extracted_json: parsed.extractedJson,
+        page_count: parsed.pageCount ?? sourceFile.page_count ?? null,
+        estimated_cost: 0,
+        processing_status: "parsed",
+        processed_at: new Date().toISOString()
+      })
+      .eq("id", sourceFile.id);
+
+    if (updateError) {
+      throw new Error(`Failed to save parser output: ${updateError.message}`);
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Parser failed with an unknown error.";
+    await markSourceFileParsingFailed(sourceFile.id, message);
+    throw error;
+  }
+
+  revalidatePath(`/deals/${dealId}`);
+  revalidatePath(`/deals/${dealId}/sources`);
+  revalidatePath(`/deals/${dealId}/source-files`);
+  revalidatePath(`/deals/${dealId}/sources/${sourceFileId}`);
+}
+
+async function markSourceFileParsingFailed(sourceFileId: string, message: string) {
+  const supabase = createSupabaseClient();
+  const timestamp = new Date().toISOString();
+  const { data: sourceFile } = await supabase
+    .from("source_files")
+    .select("notes")
+    .eq("id", sourceFileId)
+    .maybeSingle();
+  const notes = [sourceFile?.notes, `[parser ${timestamp}] ${message}`]
+    .filter(Boolean)
+    .join("\n");
+
+  await supabase
+    .from("source_files")
+    .update({
+      processing_status: "failed",
+      processed_at: timestamp,
+      estimated_cost: 0,
+      notes
+    })
+    .eq("id", sourceFileId);
 }

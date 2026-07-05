@@ -10,15 +10,13 @@ import { MissingEnvError } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
-type DealSourceFilesPageProps = {
+type DealSourcesPageProps = {
   params: {
     dealId: string;
   };
 };
 
-export default async function DealSourceFilesPage({
-  params
-}: DealSourceFilesPageProps) {
+export default async function DealSourcesPage({ params }: DealSourcesPageProps) {
   try {
     const [deal, sourceFiles] = await Promise.all([
       getDeal(params.dealId),
@@ -33,8 +31,8 @@ export default async function DealSourceFilesPage({
       <div className="space-y-6">
         <PageHeading
           eyebrow="Source Files"
-          title="Upload Source File"
-          description={`Attach a diligence source file to ${deal.deal_name}. OCR and extraction are not enabled yet.`}
+          title="Deal Source Intake"
+          description={`Upload and review source file records for ${deal.deal_name}. OCR and extraction are not enabled yet.`}
         />
 
         <section className="rounded border border-ink/10 bg-white p-5 shadow-panel">

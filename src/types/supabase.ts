@@ -211,6 +211,7 @@ export type DealSimulationInsert = Omit<
 
 export type SourceFileRow = {
   id: string;
+  source_file_id?: string | null;
   deal_id?: string | null;
   property_id?: string | null;
   file_name: string;
@@ -232,7 +233,7 @@ export type SourceFileRow = {
 
 export type SourceFileInsert = Omit<
   SourceFileRow,
-  "id" | "created_at" | "updated_at"
+  "id" | "source_file_id" | "created_at" | "updated_at"
 > & {
   id?: string;
   created_at?: string;

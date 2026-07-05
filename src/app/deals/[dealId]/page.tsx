@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DataError } from "@/components/data-error";
 import { DeleteDealButton, RestoreDealButton } from "@/components/deals/DealActions";
+import { SourceFilesTable } from "@/components/deals/SourceFilesTable";
 import { EmptyState } from "@/components/empty-state";
 import { EnvError } from "@/components/env-error";
 import {
@@ -12,7 +13,6 @@ import {
 } from "@/lib/data";
 import { MissingEnvError } from "@/lib/env";
 import { formatJpy, formatNumber, formatPercent, formatRatio } from "@/lib/format";
-import { formatSourceFileDocumentType } from "@/lib/sourceFiles";
 import type {
   DealRow,
   DealSimulationRow,
@@ -259,64 +259,14 @@ function SourceFilesList({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <SectionHeading eyebrow="Source Files" title="Attached Documents" />
         <Link
-          href={`/deals/${dealId}/source-files`}
+          href={`/deals/${dealId}/sources`}
           className="rounded-lg border-2 border-black bg-yellow-400 px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-yellow-300"
         >
           Upload source file
         </Link>
       </div>
       <div className="mt-5">
-        {sourceFiles.length === 0 ? (
-          <EmptyState message="No source files are linked to this deal yet." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
-              <thead>
-                <tr className="text-xs uppercase text-ink/50">
-                  <TableHeader>File</TableHeader>
-                  <TableHeader>Document Type</TableHeader>
-                  <TableHeader>Processing</TableHeader>
-                  <TableHeader>Review</TableHeader>
-                  <TableHeader>Created</TableHeader>
-                  <TableHeader>Notes</TableHeader>
-                  <TableHeader>Actions</TableHeader>
-                </tr>
-              </thead>
-              <tbody>
-                {sourceFiles.map((file) => (
-                  <tr key={file.id}>
-                    <TableCell strong>{file.file_name}</TableCell>
-                    <TableCell>
-                      {formatSourceFileDocumentType(file.document_type)}
-                    </TableCell>
-                    <TableCell>{file.processing_status}</TableCell>
-                    <TableCell>{file.review_status}</TableCell>
-                    <TableCell>{formatDateTime(file.created_at)}</TableCell>
-                    <TableCell>{formatText(file.notes)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        <a
-                          href={`/deals/${dealId}/source-files/${file.id}/open`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="rounded border border-ink/20 px-3 py-1 text-xs font-semibold text-black transition hover:bg-paper"
-                        >
-                          Open
-                        </a>
-                        <Link
-                          href={`/deals/${dealId}/source-files/${file.id}/preview`}
-                          className="rounded border border-ink/20 px-3 py-1 text-xs font-semibold text-black transition hover:bg-paper"
-                        >
-                          Preview
-                        </Link>
-                      </div>
-                    </TableCell>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <SourceFilesTable dealId={dealId} sourceFiles={sourceFiles} />
       </div>
     </section>
   );

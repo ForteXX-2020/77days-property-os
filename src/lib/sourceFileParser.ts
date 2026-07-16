@@ -14,6 +14,16 @@ type ZipEntry = {
   localHeaderOffset: number;
 };
 
+type XlsxSheetParseResult = {
+  sheet_name: string;
+  headers: string[];
+  rows: Array<Record<string, string | string[]>>;
+  row_count: number;
+  raw_row_count: number;
+  detected_header_row_index: number | null;
+  warnings: string[];
+};
+
 const TEXT_DECODER = new TextDecoder("utf-8");
 const MAX_TEXT_ROWS = 50;
 const MAX_JSON_ROWS = 1000;
@@ -83,13 +93,14 @@ function parseCsv(bytes: Uint8Array, sourceFile: SourceFileRow) {
   const rows = parseCsvRows(text);
   const headers = rows[0] ?? [];
   const dataRows = rows.slice(1);
-  const objectRows = dataRows.slice(0, MAX_JSON_ROWS).map((row) =>
-    Object.fromEntries(headers.map((header, index) => [header || `column_${index + 1}`, row[index] ?? ""]))
-  );
+  const safeHeaders = makeUniqueHeaders(headers, Math.max(headers.length, getMaxRowLength(dataRows)));
+  const objectRows = dataRows
+    .slice(0, MAX_JSON_ROWS)
+    .map((row) => buildRowObject(safeHeaders, row));
   const extractedText = [
     `CSV: ${sourceFile.file_name}`,
     `Rows: ${dataRows.length}`,
-    headers.length > 0 ? `Headers: ${headers.join(", ")}` : "Headers: -",
+    safeHeaders.length > 0 ? `Headers: ${safeHeaders.join(", ")}` : "Headers: -",
     "",
     ...rows.slice(0, MAX_TEXT_ROWS + 1).map((row) => row.join(" | "))
   ].join("\n");
@@ -102,7 +113,7 @@ function parseCsv(bytes: Uint8Array, sourceFile: SourceFileRow) {
         version: "0.1",
         generated_at: new Date().toISOString()
       },
-      headers,
+      headers: safeHeaders,
       rows: objectRows,
       row_count: dataRows.length
     }
@@ -169,48 +180,190 @@ function parseXlsx(bytes: Uint8Array, sourceFile: SourceFileRow) {
     .sort();
   const sheets = worksheetNames.map((entryName) => {
     const xml = getZipText(entries, entryName) ?? "";
-    const rows = parseWorksheetRows(xml, sharedStrings);
-    const firstDataRow = rows.find((row) => row.some((cell) => cell !== "")) ?? [];
-    const headers = firstDataRow.map((cell, index) => cell || `column_${index + 1}`);
-    const dataRows = rows.slice(rows.indexOf(firstDataRow) + 1);
-    const objectRows = dataRows.slice(0, MAX_JSON_ROWS).map((row) =>
-      Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""]))
-    );
+    const rawRows = parseWorksheetRows(xml, sharedStrings);
 
-    return {
-      name: sheetNameMap[entryName] ?? entryName.replace(/^xl\/worksheets\//, ""),
-      headers,
-      rows: objectRows,
-      row_count: dataRows.length
-    };
+    return parseXlsxSheet(
+      sheetNameMap[entryName] ?? entryName.replace(/^xl\/worksheets\//, ""),
+      rawRows
+    );
   });
+  const parserWarnings = sheets.flatMap((sheet) =>
+    sheet.warnings.map((warning) => `${sheet.sheet_name}: ${warning}`)
+  );
   const extractedText = [
     `XLSX: ${sourceFile.file_name}`,
-    `Sheets: ${sheets.map((sheet) => sheet.name).join(", ") || "-"}`,
+    `Sheets: ${sheets.map((sheet) => sheet.sheet_name).join(", ") || "-"}`,
+    parserWarnings.length > 0 ? `Warnings: ${parserWarnings.join(" / ")}` : null,
     "",
     ...sheets.flatMap((sheet) => [
-      `# ${sheet.name}`,
+      `# ${sheet.sheet_name}`,
       `Rows: ${sheet.row_count}`,
+      `Raw rows: ${sheet.raw_row_count}`,
+      sheet.detected_header_row_index === null
+        ? "Header row: generated fallback headers"
+        : `Header row: ${sheet.detected_header_row_index + 1}`,
       sheet.headers.length > 0 ? `Headers: ${sheet.headers.join(", ")}` : "Headers: -",
       ...sheet.rows.slice(0, MAX_TEXT_ROWS).map((row) =>
         sheet.headers.map((header) => `${header}: ${String(row[header] ?? "")}`).join(" | ")
       ),
       ""
-    ])
+    ].filter((line): line is string => line !== null))
   ].join("\n");
 
   return {
     extractedText,
     extractedJson: {
+      parser_type: "xlsx",
       parser: {
         type: "xlsx",
         version: "0.1",
         generated_at: new Date().toISOString()
       },
       sheets,
-      row_count: sheets.reduce((sum, sheet) => sum + sheet.row_count, 0)
+      row_count: sheets.reduce((sum, sheet) => sum + sheet.row_count, 0),
+      parser_warnings: parserWarnings
     }
   };
+}
+
+function parseXlsxSheet(sheetName: string, rawRows: string[][]): XlsxSheetParseResult {
+  const normalizedRows = normalizeRows(rawRows);
+  const rawRowCount = rawRows.length;
+  const skippedBlankRows = rawRowCount - normalizedRows.length;
+  const warnings: string[] = [];
+  const maxColumnCount = Math.max(getMaxRowLength(normalizedRows), 1);
+  const headerRowIndex = detectHeaderRowIndex(normalizedRows);
+  const generatedHeaders = headerRowIndex === null;
+  const headerSource = generatedHeaders
+    ? Array.from({ length: maxColumnCount }, (_value, index) => `column_${index + 1}`)
+    : normalizedRows[headerRowIndex];
+  const headers = makeUniqueHeaders(headerSource, maxColumnCount);
+  const dataRows = generatedHeaders
+    ? normalizedRows
+    : normalizedRows.slice(headerRowIndex + 1);
+  const objectRows = dataRows
+    .slice(0, MAX_JSON_ROWS)
+    .map((row) => buildRowObject(headers, row));
+
+  if (skippedBlankRows > 0) {
+    warnings.push(`${skippedBlankRows} blank row(s) skipped.`);
+  }
+
+  if (generatedHeaders) {
+    warnings.push("No reliable header row detected; fallback headers generated.");
+  }
+
+  if (headers.some((header) => /_\d+$/.test(header))) {
+    warnings.push("Blank or duplicate headers were normalized.");
+  }
+
+  return {
+    sheet_name: sheetName,
+    headers,
+    rows: objectRows,
+    row_count: dataRows.length,
+    raw_row_count: rawRowCount,
+    detected_header_row_index: headerRowIndex,
+    warnings
+  };
+}
+
+function normalizeRows(rows: string[][]) {
+  return rows
+    .map((row) => normalizeRow(row))
+    .filter((row) => !isBlankRow(row));
+}
+
+function normalizeRow(row: Array<string | number | boolean | null | undefined>) {
+  const normalizedLength = row.length;
+
+  return Array.from({ length: normalizedLength }, (_value, index) =>
+    normalizeCellValue(row[index])
+  );
+}
+
+function normalizeCellValue(value: string | number | boolean | null | undefined) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value).trim();
+}
+
+function isBlankRow(row: string[]) {
+  return row.every((cell) => cell.trim() === "");
+}
+
+function getMaxRowLength(rows: string[][]) {
+  return rows.reduce((max, row) => Math.max(max, row.length), 0);
+}
+
+function detectHeaderRowIndex(rows: string[][]) {
+  const candidates = rows.slice(0, 20);
+  let bestIndex: number | null = null;
+  let bestScore = 0;
+
+  candidates.forEach((row, index) => {
+    const nonBlankCells = row.filter((cell) => cell.trim() !== "");
+    const uniqueCells = new Set(nonBlankCells.map((cell) => cell.toLowerCase()));
+    const numericLikeCells = nonBlankCells.filter((cell) => isNumericLike(cell));
+
+    if (nonBlankCells.length < 2) {
+      return;
+    }
+
+    const score =
+      nonBlankCells.length +
+      uniqueCells.size * 0.75 -
+      numericLikeCells.length * 1.5 -
+      index * 0.05;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = index;
+    }
+  });
+
+  return bestScore > 2 ? bestIndex : null;
+}
+
+function isNumericLike(value: string) {
+  return /^[-+]?[\d,]+(?:\.\d+)?%?$/.test(value.trim());
+}
+
+function makeUniqueHeaders(sourceHeaders: string[], minColumnCount: number) {
+  const columnCount = Math.max(sourceHeaders.length, minColumnCount);
+  const seen = new Map<string, number>();
+  const headers: string[] = [];
+
+  for (let index = 0; index < columnCount; index += 1) {
+    const rawHeader = normalizeHeader(sourceHeaders[index], index);
+    const seenCount = seen.get(rawHeader) ?? 0;
+    const uniqueHeader = seenCount === 0 ? rawHeader : `${rawHeader}_${seenCount + 1}`;
+
+    seen.set(rawHeader, seenCount + 1);
+    headers.push(uniqueHeader);
+  }
+
+  return headers;
+}
+
+function normalizeHeader(value: string | null | undefined, index: number) {
+  const header = normalizeCellValue(value).replace(/\s+/g, "_");
+
+  return header || `column_${index + 1}`;
+}
+
+function buildRowObject(headers: string[], row: string[]) {
+  const rowObject: Record<string, string | string[]> = {};
+
+  headers.forEach((header, index) => {
+    rowObject[header] = normalizeCellValue(row[index]);
+  });
+
+  rowObject.raw_values = headers.map((_header, index) => normalizeCellValue(row[index]));
+
+  return rowObject;
 }
 
 function readZipEntries(buffer: Buffer) {
@@ -293,17 +446,26 @@ function parseSharedStrings(xml: string) {
 }
 
 function parseWorkbookSheetMap(workbookXml: string, relsXml: string) {
-  const rels = Object.fromEntries(
-    Array.from(relsXml.matchAll(/<Relationship[^>]*Id="([^"]+)"[^>]*Target="([^"]+)"/g)).map(
-      (match) => [match[1], `xl/${match[2].replace(/^\//, "")}`.replace("xl/worksheets", "xl/worksheets")]
-    )
-  );
+  const rels: Record<string, string> = {};
 
-  return Object.fromEntries(
-    Array.from(
-      workbookXml.matchAll(/<sheet[^>]*name="([^"]+)"[^>]*(?:r:id|id)="([^"]+)"/g)
-    ).map((match) => [rels[match[2]] ?? match[2], decodeXmlText(match[1])])
-  );
+  for (const match of Array.from(
+    relsXml.matchAll(/<Relationship[^>]*Id="([^"]+)"[^>]*Target="([^"]+)"/g)
+  )) {
+    rels[match[1]] = `xl/${match[2].replace(/^\//, "")}`.replace(
+      "xl/worksheets",
+      "xl/worksheets"
+    );
+  }
+
+  const sheetMap: Record<string, string> = {};
+
+  for (const match of Array.from(
+    workbookXml.matchAll(/<sheet[^>]*name="([^"]+)"[^>]*(?:r:id|id)="([^"]+)"/g)
+  )) {
+    sheetMap[rels[match[2]] ?? match[2]] = decodeXmlText(match[1]);
+  }
+
+  return sheetMap;
 }
 
 function parseWorksheetRows(xml: string, sharedStrings: string[]) {

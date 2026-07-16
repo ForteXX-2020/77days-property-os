@@ -7,6 +7,7 @@ import {
   parseDealNumberInput
 } from "@/lib/dealMetrics";
 import { SOURCE_FILE_DOCUMENT_TYPE_OPTIONS } from "@/lib/dealConstants";
+import { generateDealAiDraft } from "@/lib/sourceFileAiDraft";
 import {
   getSourceFileParserKind,
   getSourceFileUnsupportedReason,
@@ -464,4 +465,51 @@ async function markSourceFileParsingFailed(sourceFileId: string, message: string
       notes
     })
     .eq("id", sourceFileId);
+}
+
+export async function extractDealDraftFromSourceFile(
+  dealId: string,
+  sourceFileId: string
+) {
+  const supabase = createSupabaseClient();
+  const { data: sourceFile, error: sourceFileError } = await supabase
+    .from("source_files")
+    .select("*")
+    .eq("id", sourceFileId)
+    .eq("deal_id", dealId)
+    .maybeSingle();
+
+  if (sourceFileError) {
+    throw new Error(`Failed to load source file: ${sourceFileError.message}`);
+  }
+
+  if (!sourceFile) {
+    throw new Error("Source file was not found.");
+  }
+
+  if (!["parsed", "extracted"].includes(sourceFile.processing_status)) {
+    throw new Error("Process this file first before generating an AI draft.");
+  }
+
+  if (!sourceFile.extracted_text && !sourceFile.extracted_json) {
+    throw new Error("Parser output is required before generating an AI draft.");
+  }
+
+  const extractedJson = await generateDealAiDraft(sourceFile);
+  const { error: updateError } = await supabase
+    .from("source_files")
+    .update({
+      extracted_json: extractedJson,
+      processing_status: "extracted",
+      processed_at: new Date().toISOString()
+    })
+    .eq("id", sourceFile.id);
+
+  if (updateError) {
+    throw new Error(`Failed to save AI draft: ${updateError.message}`);
+  }
+
+  revalidatePath(`/deals/${dealId}`);
+  revalidatePath(`/deals/${dealId}/sources`);
+  revalidatePath(`/deals/${dealId}/sources/${sourceFileId}`);
 }

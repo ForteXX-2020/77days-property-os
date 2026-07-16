@@ -36,6 +36,7 @@ export default async function SourceFilePreviewPage({
       ? await createSourceFileSignedUrl(sourceFile)
       : null;
     const openUrl = `/deals/${params.dealId}/source-files/${params.sourceFileId}/open`;
+    const extractedDataUrl = `/deals/${params.dealId}/sources/${params.sourceFileId}`;
 
     return (
       <div className="space-y-5">
@@ -64,6 +65,12 @@ export default async function SourceFilePreviewPage({
             >
               Open
             </a>
+            <Link
+              href={extractedDataUrl}
+              className="rounded-lg border border-ink/20 bg-white px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-paper"
+            >
+              View extracted data
+            </Link>
           </div>
         </section>
 
@@ -88,12 +95,30 @@ export default async function SourceFilePreviewPage({
           ) : (
             <div className="rounded border border-ink/10 bg-paper/60 p-5">
               <p className="text-sm font-semibold text-ink">
-                Preview not available yet.
+                Raw file preview is not available for this file type yet.
               </p>
               <p className="mt-2 text-sm leading-6 text-ink/65">
-                PDF and image files can be previewed here. For spreadsheets,
-                CSV, text, or unknown file types, use Open for now.
+                This page is for raw file preview. PDF and image files can be
+                shown inline here. For spreadsheets, CSV, text, or unknown file
+                types, use Open for the original file or view extracted parser
+                output separately.
               </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={extractedDataUrl}
+                  className="rounded-lg border-2 border-black bg-yellow-400 px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-yellow-300"
+                >
+                  View extracted data
+                </Link>
+                <a
+                  href={openUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg border border-ink/20 bg-white px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-paper"
+                >
+                  Open raw file
+                </a>
+              </div>
             </div>
           )}
         </section>

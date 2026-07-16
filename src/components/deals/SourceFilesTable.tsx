@@ -55,7 +55,7 @@ export function SourceFilesTable({
                     href={`/deals/${dealId}/sources/${file.id}`}
                     className="rounded border border-ink/20 px-3 py-1 text-xs font-semibold text-black transition hover:bg-paper"
                   >
-                    Details
+                    Extracted Data
                   </Link>
                   <a
                     href={`/deals/${dealId}/source-files/${file.id}/open`}
@@ -69,7 +69,7 @@ export function SourceFilesTable({
                     href={`/deals/${dealId}/source-files/${file.id}/preview`}
                     className="rounded border border-ink/20 px-3 py-1 text-xs font-semibold text-black transition hover:bg-paper"
                   >
-                    Preview
+                    Raw Preview
                   </Link>
                   {isSourceFileParserSupported(file) ? (
                     <ProcessSourceFileButton dealId={dealId} sourceFileId={file.id} />
